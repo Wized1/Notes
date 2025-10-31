@@ -20,13 +20,6 @@
 
 ---
 
-## **Screenshots**  
-| Dark Mode | Light Mode | Swipe to Delete |
-|---------|----------|---------------|
-| ![Dark Mode](https://i.imgur.com/placeholder-dark.png) | ![Light Mode](https://i.imgur.com/placeholder-light.png) | ![Swipe to Delete](https://i.imgur.com/placeholder-swipe.gif) |
-
----
-
 ## **Features**  
 | Feature | Status |
 |-------|--------|
