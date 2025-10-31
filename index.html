@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Endroid Notes</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #03dac6;
+      --primary-dark: #018786;
+      --surface: #1a1a1a;
+      --surface-var: #2a2a2a;
+      --text: #ffffff;
+      --text-muted: rgba(255,255,255,0.6);
+      --danger: #ff6b6b;
+      --radius: 24px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.25);
+      --motion: 300ms ease;
+    }
+    [data-theme="light"] {
+      --primary: #018786;
+      --primary-dark: #03dac6;
+      --surface: #f9f9f9;
+      --surface-var: #eeeeee;
+      --text: #121212;
+      --text-muted: rgba(0,0,0,0.6);
+      --shadow: 0 8px 32px rgba(0,0,0,0.12);
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: var(--surface);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #homeScreen, #editorScreen { height: 100vh; display: flex; flex-direction: column; position: relative; }
+    .home-header, .editor-header {
+      background: var(--primary);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 600;
+      border-radius: 0 0 var(--radius) var(--radius);
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+
+    .theme-toggle {
+      position: absolute;
+      top: 16px; right: 16px;
+      width: 48px; height: 48px;
+      background: rgba(255,255,255,0.2);
+      border: none; border-radius: 50%;
+      color: white; font-size: 1.4rem;
+      cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      transition: all var(--motion);
+    }
+    .theme-toggle:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); }
+    [data-theme="light"] .theme-toggle { background: rgba(0,0,0,0.15); color: #121212; }
+    [data-theme="light"] .theme-toggle:hover { background: rgba(0,0,0,0.25); }
+
+    .note-list { flex: 1; padding: 20px; overflow-y: auto; }
+    .note-item { background: var(--surface-var); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; position: relative; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+    .note-content { padding: 16px 20px; background: var(--surface-var); cursor: pointer; position: relative; z-index: 2; transition: transform var(--motion); font-weight: 500; }
+    .note-title { font-weight: 500; font-size: 1.1rem; }
+    .delete-bg { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--danger); display: flex; align-items: center; justify-content: flex-end; padding-right: 24px; color: white; font-size: 1.2rem; z-index: 1; transform: translateX(100%); transition: transform var(--motion); }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    .empty-state .material-icons { font-size: 4rem; margin-bottom: 16px; opacity: 0.6; color: var(--text-muted); }
+
+    #editorScreen { display: none; background: var(--surface); }
+    .editor-header { display: flex; align-items: center; gap: 16px; }
+    .back-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 8px; border-radius: 50%; }
+    .back-btn:hover { background: rgba(255,255,255,0.2); }
+    .editor-title-input { background: transparent; border: none; color: white; font-size: 1.3rem; font-weight: 500; flex: 1; outline: none; }
+
+    .editor-content { flex: 1; margin: 20px; background: var(--surface-var); border-radius: var(--radius); overflow: hidden; box-shadow: inset 0 4px 16px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+    #noteInput { flex: 1; padding: 24px; background: transparent; border: none; color: var(--text); font-size: 1.1rem; line-height: 1.7; resize: none; outline: none; font-family: inherit; font-weight: 500; }
+    #livePreview { flex: 1; padding: 24px; overflow-y: auto; line-height: 1.7; color: var(--text); display: none; font-weight: 500; }
+
+    #livePreview * { margin: 8px 0; }
+    #livePreview strong { font-weight: 600; }
+    #livePreview em { font-style: italic; }
+    #livePreview code { background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.95em; }
+    [data-theme="light"] #livePreview code { background: rgba(0,0,0,0.08); }
+    #livePreview a { color: var(--primary); text-decoration: underline; }
+    #livePreview ul, #livePreview ol { padding-left: 24px; }
+    #livePreview h1 { font-size: 1.6em; margin: 16px 0 8px; font-weight: 600; }
+    #livePreview h2 { font-size: 1.4em; margin: 16px 0 8px; font-weight: 600; }
+    #livePreview h3 { font-size: 1.2em; margin: 16px 0 8px; font-weight: 600; }
+
+    .fab {
+      position: fixed; bottom: 32px; right: 32px;
+      width: 56px; height: 56px; background: var(--primary);
+      color: white; border: none; border-radius: 50%;
+      font-size: 1.5rem; cursor: pointer; box-shadow: var(--shadow);
+      transition: all var(--motion);
+    }
+    .fab:hover { transform: scale(1.1); }
+
+    @media (max-width: 768px) { .fab { bottom: 16px; right: 16px; } .note-list { padding: 16px; } }
+  </style>
+</head>
+<body data-theme="dark">
+
+  <!-- HOME -->
+  <div id="homeScreen">
+    <div class="home-header">Endroid Notes</div>
+    <button class="theme-toggle" id="themeToggle"><span class="material-icons">brightness_6</span></button>
+    <div class="note-list" id="noteList">
+      <div class="empty-state">
+        <div class="material-icons">note_add</div>
+        <div>No notes yet.<br>Tap + to create one.<br>Swipe left to delete</div>
+      </div>
+    </div>
+    <button class="fab" id="addNoteBtn"><span class="material-icons">add</span></button>
+  </div>
+
+  <!-- EDITOR -->
+  <div id="editorScreen">
+    <div class="editor-header">
+      <button class="back-btn" id="backBtn"><span class="material-icons">arrow_back</span></button>
+      <input type="text" id="editorTitle" class="editor-title-input" placeholder="Untitled Note" />
+    </div>
+    <button class="theme-toggle" id="themeToggleEditor"><span class="material-icons">brightness_6</span></button>
+    <div class="editor-content">
+      <textarea id="noteInput" placeholder="Type your note here..."></textarea>
+      <div id="livePreview"></div>
+    </div>
+  </div>
+
+  <script>
+    // Update preview directly
+    function updatePreview() {
+      const text = noteInput.value;
+      livePreview.textContent = text;
+    }
+
+    // DOM Elements
+    const homeScreen = document.getElementById('homeScreen');
+    const editorScreen = document.getElementById('editorScreen');
+    const noteList = document.getElementById('noteList');
+    const addBtn = document.getElementById('addNoteBtn');
+    const backBtn = document.getElementById('backBtn');
+    const editorTitle = document.getElementById('editorTitle');
+    const noteInput = document.getElementById('noteInput');
+    const livePreview = document.getElementById('livePreview');
+    const themeToggle = document.getElementById('themeToggle');
+    const themeToggleEditor = document.getElementById('themeToggleEditor');
+
+    let notes = JSON.parse(localStorage.getItem('endroid-notes-v9')) || [];
+    let currentNoteId = null;
+    let touchStartX = 0;
+    let isSwiping = false;
+
+    // Theme toggle
+    function toggleTheme() {
+      const isDark = document.body.dataset.theme === 'dark';
+      document.body.dataset.theme = isDark ? 'light' : 'dark';
+      localStorage.setItem('endroid-theme', document.body.dataset.theme);
+    }
+    themeToggle.addEventListener('click', toggleTheme);
+    themeToggleEditor.addEventListener('click', toggleTheme);
+
+    const saved = localStorage.getItem('endroid-theme');
+    if (saved) document.body.dataset.theme = saved;
+    else document.body.dataset.theme = 'dark';
+
+    // Render Home Screen with Swipe to Delete
+    function renderHome() {
+      noteList.innerHTML = '';
+      if (!notes.length) {
+        noteList.innerHTML = `<div class="empty-state"><div class="material-icons">note_add</div><div>No notes yet.<br>Tap + to create one.<br>Swipe left to delete</div></div>`;
+        return;
+      }
+
+      notes.forEach((note, i) => {
+        const item = document.createElement('div');
+        item.className = 'note-item';
+        item.innerHTML = `<div class="delete-bg"><span class="material-icons">delete</span></div><div class="note-content"><div class="note-title">${note.title || 'Untitled'}</div></div>`;
+        const content = item.querySelector('.note-content');
+        const bg = item.querySelector('.delete-bg');
+
+        // Swipe to delete
+        content.addEventListener('touchstart', e => {
+          touchStartX = e.touches[0].clientX;
+          isSwiping = true;
+        });
+
+        content.addEventListener('touchmove', e => {
+          if (!isSwiping) return;
+          const diff = touchStartX - e.touches[0].clientX;
+          if (diff > 0) {
+            content.style.transform = `translateX(-${Math.min(diff, 120)}px)`;
+            bg.style.transform = `translateX(-${Math.min(diff, 120)}px)`;
+          }
+        });
+
+        content.addEventListener('touchend', () => {
+          const diff = touchStartX - (event.changedTouches?.[0]?.clientX || touchStartX);
+          if (diff > 80) {
+            // Delete
+            notes.splice(i, 1);
+            localStorage.setItem('endroid-notes-v9', JSON.stringify(notes));
+            item.style.transition = 'all 0.3s';
+            item.style.transform = 'translateX(-100%)';
+            item.style.opacity = '0';
+            setTimeout(() => renderHome(), 300);
+          } else {
+            // Reset
+            content.style.transform = '';
+            bg.style.transform = '';
+          }
+          isSwiping = false;
+        });
+
+        // Tap to open (only if no swipe)
+        content.addEventListener('click', e => {
+          if (Math.abs(touchStartX - (e.changedTouches?.[0]?.clientX || e.clientX)) < 10) {
+            openEditor(i);
+          }
+        });
+
+        noteList.appendChild(item);
+      });
+    }
+
+    // Open Editor
+    function openEditor(id) {
+      currentNoteId = id;
+      const note = notes[id];
+      editorTitle.value = note.title || '';
+      noteInput.value = note.content || '';
+      updatePreview();
+      homeScreen.style.display = 'none';
+      editorScreen.style.display = 'flex';
+    }
+
+    // Save and go back
+    function saveAndBack() {
+      if (currentNoteId === null) return;
+      notes[currentNoteId] = { title: editorTitle.value.trim() || 'Untitled', content: noteInput.value };
+      localStorage.setItem('endroid-notes-v9', JSON.stringify(notes));
+      currentNoteId = null;
+      editorScreen.style.display = 'none';
+      homeScreen.style.display = 'flex';
+      renderHome();
+    }
+
+    // Event Listeners
+    addBtn.addEventListener('click', () => {
+      notes.push({ title: 'New Note', content: '' });
+      localStorage.setItem('endroid-notes-v9', JSON.stringify(notes));
+      openEditor(notes.length - 1);
+    });
+
+    backBtn.addEventListener('click', saveAndBack);
+    noteInput.addEventListener('input', updatePreview);
+    editorTitle.addEventListener('input', updatePreview);
+
+    // Init
+    renderHome();
+  </script>
+</body>
+</html>
